@@ -1,4 +1,4 @@
-# JavaScript 运行机制详解
+# JavaScript运行机制学习整理
 
 ## 一、JavaScript单线程模型
 
