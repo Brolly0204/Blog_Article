@@ -53,7 +53,7 @@ JavaScript引擎就是用来执行JS代码的, 通过编译器将代码编译成
 引擎主要由堆(Memory Heap)和栈(Call Stack)组成
 
 <div align="center">
-<img src="./images/headandstack.png" width="65%" style="margin:atuo">
+<img src="https://github.com/Lwenli1224/Blog_Article/raw/master/images/headandstack.png" width="65%" style="margin:atuo">
 </div>
 <br/>
 
@@ -74,9 +74,11 @@ JS在浏览器环境中运行时，BOM和DOM对象提供了很多相关外部接
 
 >JavaScript代码首次被载入时，会创建一个全局上下文，当调用一个函数时，会创建一个函数执行上下文。
 
-<div align="center">
-<img src="./images/stack2.png" width="65%" style="margin:atuo">
+
+<div align="center" style='margin-top:14px'>
+<img src="https://github.com/Lwenli1224/Blog_Article/raw/master/images/stack2.png" width="65%" style="margin:atuo">
 </div>
+
 
 >在计算机系统中栈是一种遵从**先进后出**（FILO）原则的<!--  -->区域。函数被调用时，创建一个新的**执行环境**，就会被加入到**执行栈**顶部，浏览器始终执行当前在栈顶部的执行环境。一旦函数完成了当前的执行环境，它就会被弹出栈的顶部, 把控制权返回给当前执行环境的下个执行环境。
 
@@ -99,8 +101,9 @@ function main(age, name) {
 
 main(23, 'John'); // stack 1
 ```
+
 <div align="center">
-<img src="./images/stack.gif" width="70%" style="margin:atuo">
+<img src="https://github.com/Lwenli1224/Blog_Article/raw/master/images/stack.gif" width="70%" style="margin:atuo">
 </div>
 
 > 程序运行时，首先main()函数的执行上下文入栈，再调用Student构造函数添加到当前栈尾，在Student里再调用sayName()方法，添加到此时栈尾。最终main方法所在的位置叫栈底，sayName方法所在的位置是栈顶，层层调用，直至整个调用栈完成返回结果，最后再由栈顶依次出栈。
@@ -109,13 +112,13 @@ main(23, 'John'); // stack 1
 Event Loop 类似于一个while(true)的循环，每执行一次循环体的过程我们成为Tick。每个Tick的过程就是查看是否有事件待处理，当Call Stack里面的调用栈运行完变成空了，就取出事件及其相关的回调函数。放到调用栈中并执行它。
 
 <div align="center">
-<img src="./images/loop2.png" width="70%" style="margin:atuo">
+<img src="https://github.com/Lwenli1224/Blog_Article/raw/master/images/loop2.png" width="70%" style="margin:atuo">
 </div>
 
 >调用栈中遇到DOM操作、ajax请求以及setTimeout等WebAPIs的时候就会交给浏览器内核的其他模块进行处理，webkit内核在Javasctipt执行引擎之外，有一个重要的模块是webcore模块。对于图中WebAPIs提到的三种API，webcore分别提供了DOM Binding、network、timer模块来处理底层实现。等到这些模块处理完这些操作的时候将回调函数放入任务队列中，之后等栈中的task执行完之后再去执行任务队列之中的回调函数。
 
 <div align="center">
-<img src="./images/runtime.png" width="65%" style="margin:atuo">
+<img src="https://github.com/Lwenli1224/Blog_Article/raw/master/images/runtime.png" width="65%" style="margin:atuo">
 </div>
 
 >Javascript有一个main thread 主进程和call-stack（一个调用堆栈），在对一个调用堆栈中的task处理的时候，其他的都要等着。当在执行过程中遇到一些类似于setTimeout等异步操作的时候，会交给浏览器的其他模块(以webkit为例，是webcore模块)进行处理，当到达setTimeout指定的延时执行的时间之后，task(回调函数)会放入到任务队列之中。一般不同的异步任务的回调函数会放入不同的任务队列之中。等到调用栈中所有task执行完毕之后，接着去执行任务队列之中的task(回调函数)。
@@ -147,9 +150,10 @@ console.log('Bye');
 大多数现代的系统内核都是多线程的, 他们在后台可以处理多个同时执行的操作. 当其中一个操作完成时, 系统内核会通知Node.js, 然后与之相关的回调函数会被加入到 poll队列 并且最终被执行.
 
 <div align="center">
-<img src="./images/loop-phase.png" width="75%" style="margin:atuo">
+<img src="https://github.com/Lwenli1224/Blog_Article/raw/master/images/loop-phase.png" width="75%" style="margin:atuo">
 </div>
 <br/>
+
 >注意: 在Windows和Unix/Linux实现之间存在一点小小的差异, 但对本示例来说这并不重要. 最重要的部分都已列在这里了. 实际上有7或8个阶段, 但我们关心的和Node.js实际会用到的阶段都已经列在了上面.
 
 每个阶段都有一个先进先出（FIFO）的队列，里面存放着要执行的回调函数，然而每个阶段都有其特殊之处，当事件循环进入了某个阶段后，它可以执行该阶段特有的任意操作，然后进行该阶段的任务队列中的回调函数，一直到队列为空或已执行回调的数量达到了允许的最大值，当队列为空或已执行回调的数量达到了允许的最大值时，事件循环会进入下一个阶段,阶段之间会互相转换，循环顺序并不是完全固定的 ，因为很多阶段是由外部的事件触发的。
