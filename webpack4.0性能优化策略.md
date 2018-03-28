@@ -1,9 +1,11 @@
+# webpack4.0性能优化
+
 [webapck4 新特性介绍-参考资料](http://ju.outofmemory.cn/entry/343762)
 
 当前依赖包的版本
 
+![包的版本](assets/markdown-img-paste-20180327234818620.png)
 
-![依赖包版本](https://user-gold-cdn.xitu.io/2018/3/29/1626d754b95c699d?w=816&h=440&f=png&s=56400)
 ## 1.优化loader配置
 
 ### 1.1 缩小文件匹配范围(include/exclude)
@@ -45,8 +47,7 @@ module: {
 
 > Webpack的resolve.modules配置模块库（即 node_modules）所在的位置，在 js 里出现  import 'vue' 这样不是相对、也不是绝对路径的写法时，会去 node_modules 目录下找。但是默认的配置，会采用向上递归搜索的方式去寻找，但通常项目目录里只有一个 node_modules，且是在项目根目录，为了减少搜索范围，可以直接写明 node_modules 的全路径；同样，对于别名(alias)的配置，亦当如此：
 
-
-![resolve](https://user-gold-cdn.xitu.io/2018/3/29/1626d76279b8bec9?w=236&h=228&f=png&s=11342)
+![](assets/markdown-img-paste-20180328004601939.png)
 
 ```
 const path = require('path');
@@ -121,7 +122,7 @@ import Test1 from 'util'; // 精确匹配，所以 src/util/add.js 被解析和�
 import Test2 from 'util/dep1.js'; // 精确匹配，触发普通解析 util/dep1.js
 ```
 
-### 2.3resolve.extensions
+## resolve.extensions
 > 当引入模块时不带文件后缀 webpack会根据此配置自动解析确定的文件后缀
 
 - 后缀列表尽可能小
@@ -231,8 +232,7 @@ module.exports = {
 5.1.2 output.libraryTarget
 规定了以哪一种导出你的库  默认以全局变量形式 浏览器支持的形式
 
-
-![libraryTarget](https://user-gold-cdn.xitu.io/2018/3/29/1626d770b842e3c6?w=1132&h=324&f=png&s=73488)
+![](assets/markdown-img-paste-20180328185639157.png)
 
 具体包括如下：
 
@@ -255,8 +255,8 @@ module.exports = {
 webpack --config webpack_dll.config.js --mode production
 ```
 
+![dll_01](assets/markdown-img-paste-20180328180314163.png)
 
-![DLL动态链接库](https://user-gold-cdn.xitu.io/2018/3/29/1626d77902701b54?w=464&h=228&f=png&s=18157)
 在dist目录下 多出react.dll.js 和 react.manifest.json
 - react.dll.js 动态链接库 里面包含了 react和react-dom的内容
 - react.manifest.json 描述链接库(react.dll)中的信息
@@ -309,8 +309,7 @@ pluings: [
 
 此时react.dll.js和main.js被自动引入到页面中，并且dll文件在main.js之前加载
 
-
-![加载dll](https://user-gold-cdn.xitu.io/2018/3/29/1626d7901122aa6f?w=1220&h=226&f=png&s=48366)
+![includeAssets](assets/markdown-img-paste-20180328184530679.png)
 
 ## 6.ParallelUglifyPlugin
 
@@ -428,15 +427,7 @@ sub();
 ```
 webpack --mode production  //此时funs.js中没有被用到的代码并没打包进来 而被剔除出去了
 ```
-
-## 区分环境
-未完待续...
-## 提取公共代
-未完待续...
-## 代码分离
-未完待续...
-## 开启Scope Hoisting
-未完待续...
+## 未完待续（提取公共代、代码分离、开启Scope Hoisting、区分环境...）
 
 ## 源码参考
 [GitHub源码](https://github.com/Lwenli1224/webapck-opt.git)
