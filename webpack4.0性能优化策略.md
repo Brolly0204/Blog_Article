@@ -1,5 +1,7 @@
 # webpack4.0性能优化
 
+![]('./assets/webpack.jpeg')
+
 [webapck4 新特性介绍-参考资料](http://ju.outofmemory.cn/entry/343762)
 
 当前依赖包的版本
