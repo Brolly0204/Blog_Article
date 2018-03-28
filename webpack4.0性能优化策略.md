@@ -188,7 +188,7 @@ plugins: [
 
 ```
 
-happypack提供的loader，是对文件实际匹配的处理loader。这里happypack提供的loader与plugin的衔接匹配，则是通过id=happypack来完成。（资料：[happypack原理解析-淘宝前端](http://taobaofed.org/blog/2016/12/08/happypack-source-code-analysis/)）
+happypack提供的loader，是对文件实际匹配的处理loader。这里happypack提供的loader与plugin的衔接匹配，则是通过id=happypack来完成。 资料:[happypack原理解析-淘宝前端](http://taobaofed.org/blog/2016/12/08/happypack-source-code-analysis/)
 
 ```
 npm run dev
@@ -196,7 +196,7 @@ npm run dev
 
 ## 5.DLL动态链接库
 
-> 在一个动态链接库中可以包含其他模块调用的函数和数据，动态链接库只需被编译一次，在之后的构建过程中被动态链接库包含的模块将不会被重新编译，而是直接使用动态链接库中的代码。
+> 在一个动态链接库中可以包含其他模块调用的函数和数据，动态链接库只需被编译一次，在之后的构建过程中被动态链接库包含的模块将不会被重新编译,而是直接使用动态链接库中的代码。
 
 - 将web应用依赖的基础模块抽离出来，打包到单独的动态链接库中。一个链接库可以包含多个模块。
 - 当需要导入的模块存在于动态链接库，模块不会再次打包，而是去动态链接库中去获取。
