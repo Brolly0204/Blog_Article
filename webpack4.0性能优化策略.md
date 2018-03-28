@@ -427,7 +427,18 @@ sub();
 ```
 webpack --mode production  //此时funs.js中没有被用到的代码并没打包进来 而被剔除出去了
 ```
-## 未完待续（提取公共代、代码分离、开启Scope Hoisting、区分环境...）
+
+## 区分环境
+未完待续...
+
+## 提取公共代
+未完待续...
+
+## 代码分离
+未完待续...
+
+## 开启Scope Hoisting
+未完待续...
 
 ## 源码参考
 [GitHub源码](https://github.com/Lwenli1224/webapck-opt.git)
