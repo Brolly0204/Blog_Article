@@ -9,6 +9,7 @@
 ## 1.优化loader配置
 
 ### 1.1 缩小文件匹配范围(include/exclude)
+
 > 通过排除node_modules下的文件 从而缩小了loader加载搜索范围 高概率命中文件
 ```
     module: {
