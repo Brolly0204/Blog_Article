@@ -1035,13 +1035,15 @@ module.exports = {
 ## 源码参考
 [GitHub源码](https://github.com/Lwenli1224/webapck-opt.git)
 
-## 掘金webpack打包优化策略文章
+## 掘金文章
+
 - [webpack4.0打包优化策略(一)](https://juejin.im/post/5abbc2ca5188257ddb0fae9b)
 - [webpack4.0打包优化策略(二)](https://juejin.im/post/5ac75717518825557459f12b)
 - [webpack4.0打包优化策略(三)](https://juejin.im/post/5ac76a8f51882555677ecc06)
 
-## 参考
-- [webpack中文文档](https://doc.webpack-china.org/concepts/)
+## 参考资料
+- [webpack中文官网](https://doc.webpack-china.org/guides/)
+- [webpack中文](http://www.css88.com/doc/webpack/guides/)
 - [webpack常用配置拆分](https://www.imooc.com/article/10969)
 - [webpack4特性](https://www.imooc.com/article/23555?block_id=tuijian_wz)
 - [webpack examples](https://github.com/webpack/webpack/tree/master/examples)
