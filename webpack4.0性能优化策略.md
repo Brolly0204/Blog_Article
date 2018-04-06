@@ -432,19 +432,458 @@ webpack --mode production  //此时funs.js中没有被用到的代码并没打�
 ```
 
 ## 区分环境
-未完待续...
+> 通常我们在开发网页时需要区分构建环境
 
-## 提取公共代
-未完待续...
+- 开发环境(development) 开发过程中方便开发调试的环境
+- 生产环境(production) 发布到线上使用的运行环境
 
-## 代码分离
-未完待续...
+
+### 通过npm命令区分
+
+通过cross-env模块设置环境变量
+> cross-env 跨平台地设置及使用环境变量,而不必担心为平台正确设置或使用环境变量。
+```
+npm i cross-env -D
+```
+
+### Usage
+
+npm scripts中:
+
+```
+{
+    "scripts": {
+        "build": "cross-env NODE_ENV=production webpack --mode production",
+        "dev": "cross-env NODE_ENV=development webpack-dev-server --mode development",
+    }
+}
+```
+
+执行npm命令切换环境
+```
+npm run build // 生产环境 process.env.NODE_ENV === 'production'
+npm run dev // 开发环境 process.env.NODE_ENV === 'development'
+```
+
+接下来我们就可以在webpack.config.js 通过process.env.NODE_ENV来得知当前环境标识
+
+### 代码中区分环境
+
+#### 定义环境常量
+webpack4以前都是通过DefinePlugin来定义NODE_ENV环境变量，以决定library中应该引用哪些内容。
+
+> NODE_ENV是一个由Node.js暴露给执行脚本的环境变量。通常用于决定在开发环境与生产环境下，服务工具、构建脚本和客户端library的行为。
+
+在webpack.config.js 中添加DefinePlugin插件
+
+```
+const webpack = require('webpack');
+
+plugins: [
+    new webpack.DefinePlugn({
+       'process.env': {
+           'NODE_ENV': JSON.stringify(process.env.NODE_ENV)
+       }
+    })
+]
+```
+
+
+在main.js中通过判断process.env.NODE_ENV常量 来执行相应逻辑
+
+#### mode模式配置
+> 在webpack4 增加了mode模式配置 process.env.NODE_ENV 的值不需要再定义，默认是development
+mode 是 webpack 4 中新增加的参数选项，其有两个可选值：production 和 development。mode 不可缺省，需要二选一：
+
+- production 模式：
+
+1.生产环境默认开启了很多代码优化（minify，splite等）
+2.开发时开启注视和验证，并且自动加上了eval devtool
+3.生产环境不支持watching，开发环境优化了重新打包的速度
+4.默认开启了Scope hoisting和Tree-shaking（原ModuleConcatenationPlugin）
+5.自动设置process.env.NODE_ENV到不同环境，也就是不需要DefinePlugin来做这个了
+6.如果你给mode设置为none，所有默认配置都去掉了
+7.如果不加这个配置webpack会出现提醒，所以还是加上吧
+
+- development 模式：
+
+主要优化了增量构建速度和开发体验
+
+process.env.NODE_ENV 的值不需要再定义，默认是 development
+
+开发模式下支持注释和提示，并且支持 eval 下的 source maps
+
+
+```
+const NODE_ENV = process.env.NODE_ENV;
+if (NODE_ENV === 'development') { // 开发环境下执行下面代码
+    console.log('development', NODE_ENV);
+} else { // 生产环境则执行以下环境
+    console.log('production', NODE_ENV);
+}
+
+```
+
+#### DefinePlugn
+> DefinePlugin 允许创建一个在编译时可以配置的全局常量。这可能会对开发模式和发布模式的构建允许不同的行为非常有用。
+
+### webpack配置中区分环境
+
+在项目目录中添加webpack配置文件
+
+- webpack.base.config.js 保存webpack基础通用的配置的文件
+- webpack.dev.config.js  保存webpack开发环境配置的文件
+- webpack.prod.config.js 保存webpack生成环境配置的文件
+- webpack.config.js webpack执行配置文件 保存相应环境的配置和webpack基础配置文件合并后的配置
+
+### 基础配置 webpack.base.config.js
+webpack一些loader配置
+
+```
+const path = require('path');
+const webpack = require('webpack');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+
+const HappyPack = require('happypack');
+const os = require('os'); // 系统操作函数
+const happyThreadPool = HappyPack.ThreadPool({size: os.cpus().length}); // 指定线程池个数
+
+function resolve(dir) {
+    return path.join(__dirname, dir);
+}
+
+module.exports = {
+    entry: {
+        app: './src/main.js'
+    },
+    output: {
+        path: path.join(__dirname, 'dist'),
+        filename: '[name].js'
+    },
+    module: {
+        rules: [
+            {
+                test: /\.js$/,
+                // use: 'babel-loader?cacheDirectory'
+                use: 'happypack/loader?id=babel', // 缓存loader执行结果
+                exclude: /node_modules/, // 排除不要加载的文件夹
+                include: path.resolve(__dirname, 'src') // 指定需要加载的文件夹
+            }
+        ],
+        noParse: function(content) { // content 从入口开始解析的模块路径
+            return /no-parser/.test(content); // 返回true则忽略对no-parser.js的解析
+        }
+    },
+    resolve: {
+        modules: [ // 优化模块查找路径
+            resolve('src'),
+            resolve('node_modules') // 指定node_modules所在位置 当你import第三方模块式 直接从这个路径下搜寻
+        ],
+        alias: {
+            funs$: resolve('src/util/funs.js')
+        },
+        extensions: ['.js', '.vue']
+    },
+    plugins: [
+        new webpack.DefinePlugin({ // 定义环境变量
+            "process.env": JSON.stringify(process.env.NODE_ENV)
+        }),
+        new HappyPack({
+            id: 'babel',
+            loaders: ['babel-loader?cacheDirectory'],
+            threadPool: happyThreadPool,
+            verbose: true
+        }),
+        new HtmlWebpackPlugin({
+            template: resolve('index.html'),
+            title: 'hello webpack!'
+        })
+    ]
+}
+```
+
+### 开发配置webpack.dev.config.js
+
+> 开发时的输入输出以及开发调试配置 如 devServer devtool 配置
+```
+const webpack = require('webpack');
+
+module.exports = {
+    plugins: [
+       new webpack.DefinePlugin({
+           'process.env': {
+               'NODE_ENV': JSON.stringify(process.env.NODE_ENV)
+           }
+       })
+    ],
+    devServer: {
+        contentBase: resolve('dist'),
+        compress: true,
+        port: 9000
+    }
+};
+```
+
+### 生成环境webpack.prod.config.js
+
+> 生成环境 进行压缩 代码分离等代码优化 线上配置
+```
+const webpack = require('webpack');
+const path = require('path');
+const ParallelUglifyPlugin = require('webpack-parallel-uglify-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const HtmlIncludeAssetsPlugin = require('html-webpack-include-assets-plugin');
+
+module.exports = {
+    plugins: [
+        new webpack.DllReferencePlugin({
+            manifest: require(path.join(__dirname, 'dll', 'react.manifest.json'))
+        }),
+        new ParallelUglifyPlugin({
+            workerCount: 4, // 开启几个子进程去并发的执行压缩，默认是当前电脑的cpu数量减1
+            uglifyJS: {
+                output: {
+                    beautify: false, // 不需要格式化
+                    comments: false // 保留注释
+                },
+                compress: {
+                    warnings: false, // Uglifyjs 删除没有代码时，不输出警告
+                    // drop_console: true, // 删除所有console语句
+                    collapse_vars: true,
+                    reduce_vars: true
+                }
+            }
+        }),
+        new HtmlWebpackPlugin({
+            template: path.join(__dirname, 'index.html')
+        }),
+        new HtmlIncludeAssetsPlugin({
+            assets: ['/dll/react.dll.js'],
+            append: false
+        })
+    ]
+};
+```
+
+### webpack.config.js 合并配置
+通过webpack-merge 将base配置和相应环境配置 合并到'webpack.config.js'
+
+```
+npm i webpack-merge -D
+```
+
+webpack.config.js
+
+```
+const base = require('./webpack.base.config');
+const merge = require('webpack-merge');
+
+let config;
+if (process.env.NODE_ENV === 'production') {
+    config = require('./webpack.prod.config');
+} else {
+    config = require('./webpack.dev.config');
+}
+
+module.exports = merge(base, config);
+```
+
+运行生产配置
+```
+npm run build
+```
+
+运行开发配置
+```
+npm run dev
+```
+
+
+## 提取公共代码与第三方代码
+> 将多个入口重复加载的公共资源提取出来
+
+- 相同的资源被重复的加载，浪费用户的流量和服务器的成本；
+- 每个页面需要加载的资源太大，导致网页首屏加载缓慢，影响用户体验。 如果能把公共代码抽离成单独文件进行加载能进行优化，可以减少网络传输流量，降低服务器成本
+
+* 在webpack4.0 optimization.splitChunks替代了CommonsChunkPlugin
+
+webpack.base.config.js提取配置
+```
+optimization: {
+    // runtimeChunk: {
+    //     name: "manifest"
+    // },
+    splitChunks: {
+        cacheGroups: {
+            commons: {
+                chunks: 'initial',
+                minChunks: 2,
+                maxInitialRequests: 5,
+                minSize: 0
+            },
+            vendor: { // 将第三方模块提取出来
+                test: /node_modules/,
+                chunks: 'initial',
+                name: 'vendor',
+                priority: 10, // 优先
+                enforce: true
+            }
+        }
+    }
+}
+```
+
+optimization参数介绍：
+
+```
+optimization: {
+    splitChunks: {
+      chunks: "initial",         // 必须三选一： "initial" | "all"(默认就是all) | "async"
+      minSize: 0,                // 最小尺寸，默认0
+      minChunks: 1,              // 最小 chunk ，默认1
+      maxAsyncRequests: 1,       // 最大异步请求数， 默认1
+      maxInitialRequests: 1,     // 最大初始化请求书，默认1
+      name: () => {},            // 名称，此选项课接收 function
+      cacheGroups: {                // 这里开始设置缓存的 chunks
+        priority: "0",              // 缓存组优先级 false | object |
+        vendor: {                   // key 为entry中定义的 入口名称
+          chunks: "initial",        // 必须三选一： "initial" | "all" | "async"(默认就是异步)
+          test: /react|lodash/,     // 正则规则验证，如果符合就提取 chunk
+          name: "vendor",           // 要缓存的 分隔出来的 chunk 名称
+          minSize: 0,
+          minChunks: 1,
+          enforce: true,
+          maxAsyncRequests: 1,       // 最大异步请求数， 默认1
+          maxInitialRequests: 1,     // 最大初始化请求书，默认1
+          reuseExistingChunk: true   // 可设置是否重用该chunk（查看源码没有发现默认值）
+        }
+      }
+    }
+  }
+```
+
+
+## 懒加载(按需加载)
+> 是一种很好的优化网页或应用的方式。这种方式实际上是先把你的代码在一些逻辑断点处分离开，然后在一些代码块中完成某些操作后，立即引用或即将引用另外一些新的代码块。这样加快了应用的初始加载速度，减轻了它的总体体积，因为某些代码块可能永远不会被加载。
+
+lazy.js
+```
+export default 'lazy loader';
+```
+
+main.js 当点击按钮时 再加载lazy.js 输出里面内容
+
+```
+let output = () => {
+    import('./lazy').then(module => {
+        console.log(module.default);
+    });
+};
+ReactDOM.render(
+    <div>
+    <button onClick={output}>点击</button>
+    </div>,
+    document.querySelector('#root')
+)
+```
+
+### vue中懒加载
+
+```
+const Login = () => import('./login')
+
+new VueRouter({
+  routes: [
+    { path: '/login', component: Login }
+  ]
+})
+```
+
+### react中懒加载
+
+```
+babel-plugin-syntax-dynamic-import plugin. This is a syntax-only plugin, meaning Babel won’t do any additional transformations. The plugin simply allows Babel to parse dynamic imports so webpack can bundle them as a code split. Your .babelrc should look something like this:{
+  "presets": [
+    "react"
+  ],
+  "plugins": [
+    "syntax-dynamic-import"
+  ]
+}
+react-loadable is a higher-order component for loading components with dynamic imports. It handles all sorts of edge cases automatically and makes code splitting simple! Here’s an example of how to use react-loadable:import Loadable from 'react-loadable';
+import Loading from './Loading';
+
+const LoadableComponent = Loadable({
+  loader: () => import('./Dashboard'),
+  loading: Loading,
+})
+
+export default class LoadableDashboard extends React.Component {
+  render() {
+    return <LoadableComponent />;
+  }
+}
+```
 
 ## 开启Scope Hoisting
-未完待续...
+> 在webpack4中当mode为production时默认开启了Scope Hoisting 可以让webpack打包出来的代码文件更小、运行更快，它又译作“作用域提升”。
+
+好处：
+• 代码体积更小，因为函数申明语句会产生大量代码；
+• 代码在运行时因为创建的函数作用域更少了，内存开销也随之变小
+
+scope.js
+
+```
+export default 'scope hoisting'
+```
+
+main1.js
+
+```
+import scope from './scope';
+console.log(scope);
+```
+
+webpack3 配置scope Hoisting
+
+```
+new webpack.optimize.ModuleConcatenationPlugin()
+```
+
+开启scope hoisting后的代码
+
+```
+// CONCATENATED MODULE: ./src/scope.js
+/* harmony default export */ var scope = ('scope hoisting');
+// CONCATENATED MODULE: ./src/main1.js
+
+console.log(scope);
+```
+
+ES6的静态模块分析，分析出模块之间的依赖关系，尽可能地把模块放到同一个函数中。
+
+
+同时，考虑到 Scope Hoisting 依赖源码需采用 ES6 模块化语法，还需要配置 mainFields。因为大部分 Npm 中的第三方库采用了 CommonJS 语法，但部分库会同时提供 ES6 模块化的代码，为了充分发挥 Scope Hoisting 的作用，需要增加以下配置
+
+mainFields用于配置第三方模块使用那个入口文件
+```
+module.exports = {
+  resolve: {
+    // 针对 Npm 中的第三方模块优先采用 jsnext:main 中指向的 ES6 模块化语法的文件
+    mainFields: ['jsnext:main', 'browser', 'main']
+  },
+};
+```
+
+对于采用了非 ES6 模块化语法的代码，Webpack 会降级处理不使用 Scope Hoisting 优化
+
 
 ## 源码参考
 [GitHub源码](https://github.com/Lwenli1224/webapck-opt.git)
 
 ## 参考
+- [webpack中文文档](https://doc.webpack-china.org/concepts/)
 - [webpack常用配置拆分](https://www.imooc.com/article/10969)
+- [webpack4特性](https://www.imooc.com/article/23555?block_id=tuijian_wz)
+- [webpack examples](https://github.com/webpack/webpack/tree/master/examples)
