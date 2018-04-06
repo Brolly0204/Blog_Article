@@ -495,23 +495,23 @@ plugins: [
 > 在webpack4 增加了mode模式配置 process.env.NODE_ENV 的值不需要再定义，默认是development
 mode 是 webpack 4 中新增加的参数选项，其有两个可选值：production 和 development。mode 不可缺省，需要二选一：
 
-- production 模式：
+##### production 模式：
 
-1.生产环境默认开启了很多代码优化（minify，splite等）
-2.开发时开启注视和验证，并且自动加上了eval devtool
-3.生产环境不支持watching，开发环境优化了重新打包的速度
-4.默认开启了Scope hoisting和Tree-shaking（原ModuleConcatenationPlugin）
-5.自动设置process.env.NODE_ENV到不同环境，也就是不需要DefinePlugin来做这个了
-6.如果你给mode设置为none，所有默认配置都去掉了
-7.如果不加这个配置webpack会出现提醒，所以还是加上吧
+- 1.生产环境默认开启了很多代码优化（minify，splite等）
+- 2.开发时开启注视和验证，并且自动加上了eval devtool
+- 3.生产环境不支持watching，开发环境优化了重新打包的速度
+- 4.默认开启了Scope hoisting和Tree-shaking（原ModuleConcatenationPlugin）
+- 5.自动设置process.env.NODE_ENV到不同环境，也就是不需要DefinePlugin来做这个了
+- 6.如果你给mode设置为none，所有默认配置都去掉了
+- 7.如果不加这个配置webpack会出现提醒，所以还是加上吧
 
-- development 模式：
+#### development 模式：
 
-主要优化了增量构建速度和开发体验
+- 1.主要优化了增量构建速度和开发体验
 
-process.env.NODE_ENV 的值不需要再定义，默认是 development
+- 2.process.env.NODE_ENV 的值不需要再定义，默认是 development
 
-开发模式下支持注释和提示，并且支持 eval 下的 source maps
+- 3.开发模式下支持注释和提示，并且支持 eval 下的 source maps
 
 
 ```
@@ -665,8 +665,8 @@ module.exports = {
 };
 ```
 
-### webpack.config.js 合并配置
-通过webpack-merge 将base配置和相应环境配置 合并到'webpack.config.js'
+### webpack.config.js 配置合并
+借助webpack-merge 将base配置和相应环境配置 合并到'webpack.config.js'
 
 ```
 npm i webpack-merge -D
@@ -698,6 +698,159 @@ npm run build
 npm run dev
 ```
 
+
+## 实时重新加载(live reloading) 和 模块热替换(HMR)
+> webpack-dev-server 为你提供了一个简单的 web 服务器，并且能够实时重新加载(live reloading)。
+
+让我们设置以下：
+
+```
+    npm i webpack-dev-server -D
+```
+
+配置webpack.dev.config.js
+
+```
+devServer: {
+    contentBase: path.join(__dirname, 'dist'), // 将 dist 目录下的文件，作为可访问文件。
+    compress: true, // 开启Gzip压缩
+    port: 9000, // 端口号
+    inline: true // 在打包后文件里注入一个websocket客户端
+}
+```
+
+npm scripts
+
+```
+{
+    "scripts": {
+        "dev": "cross-env NODE_ENV=development webpack-dev-server --mode development"
+    }
+}
+```
+
+启动server
+
+```
+npm run dev
+```
+浏览器访问localhost:9000 当修改代码ctrl+s 将自动刷新浏览器
+
+## 启用HMR
+> 模块热替换(Hot Module Replacement 或 HMR)是 webpack 提供的最有用的功能之一。它允许在运行时更新各种模块，而无需进行完全刷新。
+
+配置webpack.dev.config.js
+
+```
+devServer: {
+    contentBase: path.join(__dirname, 'dist'),
+    compress: true,
+    port: 9000,
+    inline: true,
+    hot: true // 开启HMR
+}
+```
+
+注意 此外我们还需添加NamedModulesPlugin 和 HotModuleReplacementPlugin 插件
+
+webpack.dev.config.js
+```
+{
+    plugins: [
+        new webpack.NamedModulesPlugin(),
+        new webpack.HotModuleReplacementPlugin()
+    ]
+}
+```
+
+### 其他代码和框架开启热替换
+
+1. React Hot Loader（实时调整 react 组件）
+
+Install
+
+```
+npm install react-hot-loader
+```
+
+Getting started
+
+1.1 Add react-hot-loader/babel to your .babelrc:
+
+```
+// .babelrc
+
+{
+    "plugins": ["react-hot-loader"]
+}
+```
+
+1.2 Mark your root component as hot-exported:
+```
+// App.js
+import React from 'react'
+import { hot } from 'react-hot-loader'
+
+const App = () => <div>Hello World!</div>
+
+export default hot(module)(App)
+```
+
+2. Vue loader
+> vue-cli 已经集成 只需用vue-cli脚手架开发即可
+
+
+ - [react-hot-loader](https://github.com/gaearon/react-hot-loader)
+ - [vue-loader](https://github.com/vuejs/vue-loader)
+
+### HMR 修改样式表
+> 借助于 style-loader 的帮助，CSS 的模块热替换实际上是相当简单的。当更新 CSS 依赖模块时，此 loader 在后台使用 module.hot.accept 来修补(patch) <style> 标签。
+
+可以使用以下命令安装两个 loader ：
+
+```
+npm install --save-dev style-loader css-loader
+```
+
+配置webpack.base.config.js
+
+```
+const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const webpack = require('webpack');
+
+module.exports = {
+  entry: {
+    app: './src/index.js'
+  },
+  devtool: 'inline-source-map',
+  devServer: {
+    contentBase: './dist',
+    hot: true
+  },
++   module: {
++     rules: [
++       {
++         test: /\.css$/,
++         use: ['style-loader', 'css-loader']
++       }
++     ]
++   },
+  plugins: [
+    new HtmlWebpackPlugin({
+      title: 'Hot Module Replacement'
+    }),
+    new webpack.HotModuleReplacementPlugin()
+  ],
+  output: {
+    filename: '[name].bundle.js',
+    path: path.resolve(__dirname, 'dist')
+  }
+};
+```
+
+### HMR参考配置
+[HMR参考](http://www.css88.com/doc/webpack/guides/hot-module-replacement/)
 
 ## 提取公共代码与第三方代码
 > 将多个入口重复加载的公共资源提取出来
@@ -881,6 +1034,11 @@ module.exports = {
 
 ## 源码参考
 [GitHub源码](https://github.com/Lwenli1224/webapck-opt.git)
+
+## 掘金webpack打包优化策略文章
+- [webpack4.0打包优化策略(一)](https://juejin.im/post/5abbc2ca5188257ddb0fae9b)
+- [webpack4.0打包优化策略(二)](https://juejin.im/post/5ac75717518825557459f12b)
+- [webpack4.0打包优化策略(三)](https://juejin.im/post/5ac76a8f51882555677ecc06)
 
 ## 参考
 - [webpack中文文档](https://doc.webpack-china.org/concepts/)
